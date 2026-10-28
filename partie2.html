@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Révisions Relation Client MCV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : sommaire en "étiquettes de rayon" → exercice en carte unique → note rendue sous forme de ticket de caisse */
+:root{
+  --bg:#EEF2F0; --surface:#FFFFFF; --sunk:#E2E8E5; --ink:#132019; --muted:#56665E; --line:#C9D3CE;
+  --accent:#0E6B58; --accent-ink:#FFFFFF; --tag:#FFCC2E; --tag-ink:#1C1A08;
+  --good:#16834A; --good-bg:#DDF2E5; --bad:#C2372C; --bad-bg:#FBE3E0;
+  --p1:#0E6B58; --p2:#B5531B; --p3:#4F46B5; --p4:#A0247A; --p5:#2F7BB8; --p6:#7A6A10; --p7:#C2372C;
+  --f-display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1412; --surface:#17201C; --sunk:#202B26; --ink:#E6EEEA; --muted:#97A9A0; --line:#2F3D37;
+  --accent:#4CC1A6; --accent-ink:#06120E; --tag:#FFD54A; --tag-ink:#1C1A08;
+  --good:#4CC27E; --good-bg:#16301F; --bad:#F06A5E; --bad-bg:#3A1A17;
+  --p1:#4CC1A6; --p2:#F0915A; --p3:#9C95F5; --p4:#E07BC3; --p5:#6DB4EC; --p6:#D6C14E; --p7:#F06A5E;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#17201C; --sunk:#202B26; --ink:#E6EEEA; --muted:#97A9A0; --line:#2F3D37;
+  --accent:#4CC1A6; --accent-ink:#06120E; --tag:#FFD54A; --tag-ink:#1C1A08;
+  --good:#4CC27E; --good-bg:#16301F; --bad:#F06A5E; --bad-bg:#3A1A17;
+  --p1:#4CC1A6; --p2:#F0915A; --p3:#9C95F5; --p4:#E07BC3; --p5:#6DB4EC; --p6:#D6C14E; --p7:#F06A5E;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+button{font:inherit;color:inherit}
+button:focus-visible, select:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- Sommaire ---------- */
+.hero{display:grid;gap:14px;margin-bottom:28px}
+.hero h1{font-size:clamp(34px,7vw,58px);font-weight:800;letter-spacing:-.02em}
+.hero h1 span{background:var(--tag);color:var(--tag-ink);padding:0 .18em;border-radius:4px}
+.hero p{margin:0;max-width:62ch;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:10px 24px;font-family:var(--f-mono);font-size:14px}
+.stats b{font-size:20px;font-family:var(--f-display)}
+.howto{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;color:var(--muted);background:var(--surface)}
+.bloc{margin-top:34px}
+.bloc h2{font-size:22px;font-weight:700;margin-bottom:4px}
+.bloc .eyebrow{margin-bottom:12px;display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px 20px;cursor:pointer;display:grid;gap:8px;transition:transform .12s, border-color .12s}
+.card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 3px 3px 0;background:var(--line)}
+.card.done::before{background:var(--accent)}
+.card .num{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.card h3{font-size:18px;font-weight:700}
+.card .meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.price{font-family:var(--f-mono);font-weight:600;font-size:13px;background:var(--tag);color:var(--tag-ink);padding:2px 8px;border-radius:3px}
+.price.none{background:var(--sunk);color:var(--muted)}
+.final{margin-top:34px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:var(--ink);color:var(--bg);border-radius:var(--r);padding:20px}
+.final h2{font-size:24px}
+.final p{margin:4px 0 0;opacity:.8;font-size:15px}
+
+/* ---------- Boutons ---------- */
+.btn{border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.tag{background:var(--tag);color:var(--tag-ink)}
+.back{background:none;border:0;color:var(--muted);cursor:pointer;padding:4px 0;font-size:15px}
+.back:hover{color:var(--ink)}
+
+/* ---------- Chapitre ---------- */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.bar{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden;margin-bottom:22px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+details.memo{background:var(--surface);border:1px dashed var(--accent);border-radius:var(--r);padding:12px 16px;margin-bottom:18px}
+details.memo summary{cursor:pointer;font-weight:700;color:var(--accent)}
+details.memo ul{margin:10px 0 2px;padding-left:20px;display:grid;gap:6px}
+details.memo li{max-width:70ch}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;display:grid;gap:18px}
+.ex-head{display:grid;gap:6px}
+.ex-type{justify-self:start;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:var(--tag);color:var(--tag-ink);padding:3px 8px;border-radius:3px}
+.ex-q{font-size:20px;font-weight:700;font-family:var(--f-display);line-height:1.25}
+.ex-hint{font-size:14px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+
+/* QCM / VF */
+.opts{display:grid;gap:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px;cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.opt .k{font-family:var(--f-mono);font-weight:600;color:var(--muted);min-width:1.2em}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:var(--sunk)}
+.opt.ok{border-color:var(--good);background:var(--good-bg)}
+.opt.ko{border-color:var(--bad);background:var(--bad-bg)}
+.opt:disabled{cursor:default}
+.vf{grid-template-columns:1fr 1fr}
+.vf .opt{justify-content:center;font-weight:700;font-size:18px}
+
+/* Relier */
+.match{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);gap:10px 0}
+.match .col{display:grid;gap:10px;align-content:start}
+.match svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.mi{position:relative;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:15px;line-height:1.35;min-height:46px}
+.mi::after{content:"";position:absolute;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--surface);border:2px solid var(--muted)}
+.col.l .mi::after{right:-6px}
+.col.r .mi::after{left:-6px}
+.mi.sel{border-color:var(--tag);box-shadow:0 0 0 3px var(--tag)}
+.mi.paired::after{background:var(--pc);border-color:var(--pc)}
+.mi.paired{border-color:var(--pc)}
+.mi.ok{background:var(--good-bg)} .mi.ko{background:var(--bad-bg)}
+
+/* Ordre */
+.order{display:grid;gap:8px;list-style:none;margin:0;padding:0;counter-reset:o}
+.order li{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 8px 8px 12px;counter-increment:o}
+.order li::before{content:counter(o);font-family:var(--f-mono);font-weight:600;color:var(--muted);min-width:1.4em}
+.order li span{flex:1;min-width:0}
+.order li.ok{border-color:var(--good);background:var(--good-bg)}
+.order li.ko{border-color:var(--bad);background:var(--bad-bg)}
+.mv{display:flex;gap:4px}
+.mv button{width:38px;height:38px;border-radius:6px;border:1px solid var(--line);background:var(--sunk);cursor:pointer;font-size:16px}
+.mv button:disabled{opacity:.3;cursor:default}
+
+/* Classer */
+.cls{display:grid;gap:10px}
+.cls-row{display:grid;gap:8px;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface)}
+.cls-row.ok{border-color:var(--good);background:var(--good-bg)}
+.cls-row.ko{border-color:var(--bad);background:var(--bad-bg)}
+.cls-row .it{font-weight:700}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1.5px solid var(--line);background:var(--bg);border-radius:99px;padding:5px 12px;font-size:14px;cursor:pointer}
+.seg button.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg button:disabled{cursor:default}
+.fix{font-size:14px;color:var(--bad);font-weight:700}
+
+/* Trous */
+.trous{font-size:18px;line-height:2.3}
+.trous select{font:inherit;font-size:16px;padding:3px 6px;border-radius:6px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);max-width:100%}
+.trous select.ok{border-color:var(--good);background:var(--good-bg)}
+.trous select.ko{border-color:var(--bad);background:var(--bad-bg)}
+.trous .sol{font-size:14px;color:var(--good);font-weight:700;margin-left:4px}
+
+/* Retour */
+.fb{border-radius:8px;padding:14px 16px;display:grid;gap:6px}
+.fb.ok{background:var(--good-bg);border-left:5px solid var(--good)}
+.fb.mid{background:var(--sunk);border-left:5px solid var(--tag)}
+.fb.ko{background:var(--bad-bg);border-left:5px solid var(--bad)}
+.fb strong{font-family:var(--f-display);font-size:18px}
+.fb ol{margin:4px 0 0;padding-left:22px}
+
+/* Ticket */
+.ticket{max-width:420px;margin:0 auto;background:var(--surface);color:var(--ink);font-family:var(--f-mono);font-size:14px;padding:26px 22px 30px;position:relative;
+  -webkit-mask: radial-gradient(circle 7px at 50% 0,#0000 98%,#000) 0 0/18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 100%/18px 51% repeat-x;
+  mask: radial-gradient(circle 7px at 50% 0,#0000 98%,#000) 0 0/18px 51% repeat-x, radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 100%/18px 51% repeat-x}
+.ticket .c{text-align:center}
+.ticket hr{border:0;border-top:1.5px dashed var(--line);margin:12px 0}
+.ticket .row{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+.ticket .row span:first-child{min-width:0}
+.ticket .tot{font-size:22px;font-weight:600}
+.ticket .msg{text-align:center;margin-top:12px;font-family:var(--f-body);font-size:15px}
+.res-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
+
+@media (max-width:520px){
+  .ex{padding:18px 14px}
+  .ex-q{font-size:18px}
+  .match{grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr)}
+  .mi{font-size:14px;padding:8px 9px}
+  .vf{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ================= CONTENU ================= */
+const Q=(q,o,ex)=>({t:"qcm",q,o,ex});
+const VF=(q,a,ex)=>({t:"vf",q,a,ex});
+const M=(q,p,ex)=>({t:"match",q,p,ex});
+const O=(q,items,ex)=>({t:"order",q,items,ex});
+const T=(q,txt,ex)=>({t:"trous",q,txt,ex});
+const C=(q,cats,items,ex)=>({t:"classer",q,cats,items,ex});
+
+const BLOCS=[
+ {id:"com",name:"Communiquer avec le client",sub:"En face à face, à distance, par les questions"},
+ {id:"fid",name:"Satisfaire et fidéliser",sub:"Outils, données clients, cibles et réseaux sociaux"},
+ {id:"loi",name:"Respecter la réglementation",sub:"Données, consommateur, CGV, hygiène, dates"}
+];
+
+const CH=[
+/* ---------- 1 ---------- */
+{bloc:"com",title:"Prise de contact en face à face",
+memo:[
+"Règle des 4×20 : les 20 premières secondes, les 20 premiers mots, les 20 premiers gestes, les 20 cm du visage (sourire, regard).",
+"SBAM : Sourire, Bonjour, Au revoir, Merci.",
+"Communication verbale : les mots. Non verbale : sourire, regard, gestes, posture, tenue. Paraverbale : ton, volume, débit et articulation de la voix.",
+"Les distances : intime (moins de 45 cm, à éviter), personnelle (45 cm à 1,2 m, pour conseiller), sociale (1,2 à 3,6 m, pour accueillir), publique (plus de 3,6 m, parler à un groupe).",
+"Attitude : disponible, souriant, tenue soignée, bras décroisés, pas de téléphone en main.",
+"Évite « Je peux vous aider ? » : le client répond souvent « Non, je regarde ». Préfère une phrase ouverte liée à ce qu'il regarde."],
+ex:[
+C("Verbal, non verbal ou paraverbal ?",["Verbal","Non verbal","Paraverbal"],[
+["« Bonjour, bienvenue chez nous ! »",0],["Un sourire sincère",1],["Un ton de voix chaleureux",2],["Parler lentement et clairement",2],["Garder les bras décroisés",1],["« Je vous écoute. »",0],["Regarder le client dans les yeux",1]],"Verbal = les mots. Non verbal = le corps. Paraverbal = la voix."),
+T("Complète SBAM.","{{Sourire|Service|Silence}}, {{Bonjour|Bravo|Budget}}, {{Au revoir|Achat|Accueil}}, {{Merci|Marge|Magasin}}.",null),
+M("Relie chaque distance à son usage.",[["Intime (moins de 45 cm)","Réservée aux proches, à éviter avec un client"],["Personnelle (45 cm à 1,2 m)","Idéale pour conseiller un client"],["Sociale (1,2 à 3,6 m)","Pour accueillir et saluer à distance"],["Publique (plus de 3,6 m)","Pour parler à un groupe"]],null),
+Q("Une cliente regarde les sacs à dos. Quelle accroche est la meilleure ?",["« Bonjour ! C'est pour un usage au quotidien ou pour voyager ? »","« Je peux vous aider ? »","« Vous cherchez quelque chose ? »","« Ils sont tous en promo. »"],"Une accroche ouverte, liée à ce que regarde la cliente, lance la conversation."),
+Q("Quelle attitude est à ÉVITER à l'accueil ?",["Garder les bras croisés en regardant son téléphone","Sourire et saluer le client","Se tenir à distance personnelle","Interrompre sa mise en rayon pour accueillir"],null),
+VF("Le paraverbal, c'est le ton, le volume et le débit de la voix.",true,null)
+]},
+/* ---------- 2 ---------- */
+{bloc:"com",title:"Prise de contact à distance",
+memo:[
+"Outils à distance : téléphone, e-mail, SMS, chat ou chatbot, visio, réseaux sociaux, courrier.",
+"Téléphone : décrocher avant la 3e sonnerie ; annoncer l'enseigne, son prénom, saluer et proposer son aide ; sourire (il s'entend dans la voix) ; noter les informations ; reformuler.",
+"CROC pour un appel que tu passes (Contact, Raison, Objectif, Conclusion). CERC pour un appel que tu reçois (Contact, Écoute, Reformulation, Conclusion).",
+"À l'écrit (e-mail, chat, réseaux) : zéro faute, ton adapté, réponse rapide, message personnalisé, signature.",
+"En visio : cadre neutre, bonne lumière, tenue soignée, regarder la caméra, tester son matériel avant.",
+"Sans le non verbal, la voix et les mots comptent double."],
+ex:[
+Q("Quelle est la meilleure façon de décrocher ?",["« Boulanger Créteil, Inès à l'appareil, bonjour ! Que puis-je faire pour vous ? »","« Allô ? »","« Oui ? »","« Boulanger, j'écoute. »"],"Enseigne + prénom + salutation + offre de service : le client sait tout de suite à qui il parle."),
+C("Contact en face à face ou à distance ?",["Face à face","À distance"],[
+["Accueil d'un client en rayon",0],["Réponse via le chatbot du site",1],["Conseil dans la cabine d'essayage",0],["Démonstration en visio",1],["Rencontre sur un stand de salon",0],["Appel téléphonique",1],["Message privé sur Instagram",1]],null),
+M("Relie chaque outil à la situation qui lui convient le mieux.",[["SMS","Prévenir qu'une commande est prête"],["E-mail","Envoyer un devis en pièce jointe"],["Téléphone","Répondre tout de suite à une question urgente"],["Chat en ligne","Aider un client pendant qu'il navigue sur le site"],["Visio","Faire une démonstration à distance"],["Réseaux sociaux","Répondre à un commentaire public"]],null),
+VF("Au téléphone, le client ne voit pas le sourire : inutile de sourire.",false,"Le sourire s'entend dans la voix : elle est plus chaleureuse."),
+Q("Au téléphone, le non verbal disparaît. Sur quoi faut-il être le plus attentif ?",["Sa voix : ton, débit, articulation","Sa tenue vestimentaire","Sa posture","Ses gestes"],null),
+Q("En visio avec un client, le vendeur doit…",["Regarder la caméra, choisir un cadre neutre et tester son matériel avant","Rester dans un lieu bruyant pour montrer qu'il travaille","Couper sa caméra","Regarder son écran de téléphone"],null)
+]},
+/* ---------- 3 ---------- */
+{bloc:"com",title:"Les types de questions",
+memo:[
+"Question ouverte : réponse libre (« Comment comptez-vous l'utiliser ? »). Pour lancer la découverte.",
+"Question fermée : réponse oui / non (« Avez-vous un jardin ? »). Pour confirmer ou conclure.",
+"Question alternative : choix entre deux (« Plutôt en tissu ou en cuir ? »). Pour faire choisir.",
+"Question relais : relancer pour préciser (« C'est-à-dire ? », « Par exemple ? »).",
+"Question miroir (écho) : répéter le dernier mot du client pour qu'il développe.",
+"Question suggestive (orientée) : elle souffle la réponse. À éviter en découverte.",
+"Technique de l'entonnoir : on part de questions larges (ouvertes) pour aller vers des questions précises (alternatives, fermées)."],
+ex:[
+M("Relie chaque question à son type.",[["« Que recherchez-vous pour votre salon ? »","Ouverte"],["« Avez-vous des animaux à la maison ? »","Fermée"],["« Vous préférez une livraison ou un retrait en magasin ? »","Alternative"],["« Par exemple ? »","Relais"],["Client : « Il me faut un canapé solide. » Vendeur : « Solide ? »","Miroir"],["« Un canapé blanc, ce n'est pas pratique avec des enfants, si ? »","Suggestive"]],null),
+C("Question ouverte ou fermée ?",["Ouverte","Fermée"],[
+["« Comment utilisez-vous votre ordinateur ? »",0],["« C'est pour vous ? »",1],["« Qu'aimez-vous dans votre ancien modèle ? »",0],["« Vous avez la carte fidélité ? »",1],["« Que pensez-vous de cette couleur ? »",0],["« Ce modèle vous convient-il ? »",1]],"Une question ouverte ne peut pas se répondre par oui ou non."),
+O("Technique de l'entonnoir : remets les questions dans l'ordre.",["« Que recherchez-vous aujourd'hui ? »","« Pour quelle pièce et quel usage ? »","« Plutôt en tissu ou en cuir ? »","« Ce canapé gris vous convient-il ? »"],"On va du plus large au plus précis : ouverte → ouverte ciblée → alternative → fermée."),
+Q("Le client dit : « Je cherche quelque chose de pratique. » Quelle question relais poses-tu ?",["« Pratique, c'est-à-dire ? »","« Vous avez votre carte ? »","« Ce modèle-là vous va ? »","« Vous ne voulez pas un modèle de luxe, si ? »"],null),
+Q("Quelle question faut-il éviter pendant la découverte des besoins ?",["La question suggestive","La question ouverte","La question relais","La question alternative"],"Elle influence le client : on n'apprend rien sur son vrai besoin."),
+VF("La question alternative propose un choix entre deux options.",true,null),
+Q("Pour vérifier l'accord du client avant de conclure, quelle question utilises-tu ?",["Une question fermée : « Ce modèle vous convient-il ? »","Une question miroir","Une question ouverte large","Une question suggestive"],null)
+]},
+/* ---------- 4 ---------- */
+{bloc:"fid",title:"Les outils de fidélisation",
+memo:[
+"Fidéliser, c'est faire revenir un client existant. Cela coûte environ 5 fois moins cher que de conquérir un nouveau client.",
+"Outils : carte et programme de fidélité (points, cagnotte, paliers), offres personnalisées (anniversaire, bons de réduction), newsletter, club ou statut VIP, ventes privées, parrainage, services (livraison, retouches, SAV, garanties, reprise), application de l'enseigne, communauté sur les réseaux sociaux.",
+"Fidélisation matérielle : avantages concrets (réductions, cadeaux, points).",
+"Fidélisation relationnelle : attention, personnalisation, qualité de l'accueil et du suivi.",
+"Le meilleur outil reste un client satisfait de l'accueil et du conseil."],
+ex:[
+C("Fidéliser un client existant ou conquérir un nouveau client ?",["Fidéliser","Conquérir"],[
+["Carte de fidélité avec points",0],["Flyers distribués dans la rue pour se faire connaître",1],["Bon de réduction pour l'anniversaire du client",0],["« -10 % sur votre première commande »",1],["Vente privée réservée aux membres",0],["Stand sur un salon pour trouver de nouveaux clients",1]],null),
+M("Relie chaque outil à son exemple.",[["Carte de fidélité","Cumuler des points à chaque achat"],["Parrainage","Le client recommande un ami et chacun reçoit un bon"],["Vente privée","Accès aux soldes avant tout le monde"],["Newsletter","E-mail régulier avec nouveautés et offres"],["Service après-vente","Réparer ou échanger un produit après l'achat"]],null),
+C("Fidélisation matérielle ou relationnelle ?",["Matérielle","Relationnelle"],[
+["Un bon de réduction de 5 €",0],["Le vendeur se souvient du prénom de la cliente",1],["Un cadeau offert dès 50 € d'achat",0],["Un appel de suivi après l'achat",1],["Des points cumulés sur la carte",0],["Un conseil vraiment personnalisé",1]],null),
+Q("Pourquoi une enseigne cherche-t-elle à fidéliser ses clients ?",["Garder un client coûte moins cher qu'en conquérir un nouveau","Pour avoir moins de clients","Pour augmenter ses stocks","Parce que la loi l'oblige"],null),
+Q("Une cliente reçoit un SMS : « Joyeux anniversaire ! -15 % cette semaine. » C'est…",["Une offre personnalisée de fidélisation","Une action de prospection","Une réclamation","Une étude de marché"],null),
+VF("La qualité de l'accueil est un outil de fidélisation.",true,"Un client bien reçu a envie de revenir.")
+]},
+/* ---------- 5 ---------- */
+{bloc:"fid",title:"Mesurer la satisfaction client",
+memo:[
+"Mesurer la satisfaction permet de savoir si le client est content, d'améliorer le service et d'éviter qu'il parte chez un concurrent.",
+"Outils : questionnaire de satisfaction (papier, e-mail, QR code), enquête à chaud (juste après l'achat) ou à froid (quelques jours après), borne à smileys, avis en ligne, client mystère, boîte à idées, analyse des réclamations et des retours.",
+"NPS (Net Promoter Score) : « Recommanderiez-vous notre magasin ? » de 0 à 10. Promoteurs : 9-10. Passifs : 7-8. Détracteurs : 0 à 6. NPS = % de promoteurs − % de détracteurs.",
+"Indicateurs : taux de satisfaction, taux de réclamation, taux de retour, note moyenne des avis.",
+"On répond à tous les avis, même négatifs, poliment et avec une solution."],
+ex:[
+M("Relie chaque outil à sa définition.",[["Borne à smileys","Le client appuie sur un visage en sortant"],["Client mystère","Une personne joue le client et évalue l'accueil"],["Enquête à froid","Questionnaire envoyé quelques jours après l'achat"],["Avis en ligne","Note et commentaire laissés sur Google"],["Boîte à idées","Les clients y déposent leurs suggestions"]],null),
+C("NPS : dans quel groupe se trouve chaque note ?",["Promoteur","Passif","Détracteur"],[
+["Note 10",0],["Note 9",0],["Note 8",1],["Note 7",1],["Note 6",2],["Note 2",2]],"Attention : 6/10 est déjà un détracteur !"),
+Q("Sur 100 clients interrogés : 50 promoteurs, 30 passifs, 20 détracteurs. Quel est le NPS ?",["30","50","80","70"],"50 % − 20 % = 30. Les passifs ne comptent pas dans le calcul."),
+Q("Un client laisse un avis négatif sur Google. Que fait l'enseigne ?",["Elle répond poliment, s'excuse et propose une solution","Elle ne répond pas","Elle répond que le client a tort","Elle supprime le magasin de Google"],"Les autres clients lisent la réponse : elle montre que l'enseigne écoute."),
+VF("Une enquête « à chaud » est réalisée juste après l'achat ou le service.",true,null),
+T("Complète.","Taux de réclamation = nombre de {{réclamations|ventes|vendeurs}} ÷ nombre de {{ventes|réclamations|rayons}} × 100.",null)
+]},
+/* ---------- 6 ---------- */
+{bloc:"fid",title:"CRM et SIC",
+memo:[
+"SIC (Système d'Information Commercial) : l'ensemble des informations commerciales collectées, traitées, stockées et diffusées pour aider à prendre des décisions.",
+"Sources internes : ventes, stocks, fichier clients, réclamations, remontées des vendeurs. Sources externes : veille concurrentielle, études de marché, INSEE, presse, fournisseurs.",
+"CRM (Customer Relationship Management) = GRC (Gestion de la Relation Client) : un logiciel qui centralise les données de chaque client : coordonnées, historique d'achats, contacts, réclamations, préférences.",
+"Le CRM sert à personnaliser les offres, relancer, fidéliser et mieux cibler.",
+"Le vendeur tient les fiches à jour et respecte le RGPD."],
+ex:[
+Q("CRM signifie…",["Customer Relationship Management (Gestion de la Relation Client)","Chiffre de Rentabilité Mensuel","Contrôle des Rayons du Magasin","Commande, Réception, Mise en rayon"],null),
+C("Source d'information interne ou externe ?",["Interne","Externe"],[
+["Les tickets de caisse du magasin",0],["Une étude de l'INSEE",1],["Le fichier clients",0],["Un relevé de prix chez un concurrent",1],["Les remontées des vendeurs",0],["Un article de presse professionnelle",1],["Le registre des réclamations",0]],null),
+O("Remets le fonctionnement du SIC dans l'ordre.",["Collecter les informations","Traiter et analyser","Stocker","Diffuser aux personnes concernées"],null),
+M("Relie chaque terme à sa définition.",[["SIC","Ensemble des informations utiles aux décisions commerciales"],["CRM","Logiciel qui centralise les données de chaque client"],["Fichier clients","Liste des clients avec leurs coordonnées"],["Historique d'achats","Tout ce qu'un client a acheté et quand"]],null),
+Q("Le CRM montre que Mme Lopez achète des croquettes tous les mois. Que peut faire le magasin ?",["Lui envoyer une offre personnalisée sur ses croquettes","Supprimer sa fiche","Lui envoyer des offres sur les couches pour bébé","Rien du tout"],"Le CRM sert justement à personnaliser les offres."),
+VF("Les données du CRM doivent être mises à jour et protégées selon le RGPD.",true,null)
+]},
+/* ---------- 7 ---------- */
+{bloc:"fid",title:"BtoB et BtoC",
+memo:[
+"BtoB (Business to Business) : une entreprise vend à une autre entreprise (un grossiste vend à un restaurant).",
+"BtoC (Business to Consumer) : une entreprise vend à un particulier (un magasin de vêtements vend à une cliente).",
+"CtoC (Consumer to Consumer) : un particulier vend à un particulier (Vinted, Leboncoin).",
+"En BtoB : achats raisonnés, grosses quantités, prix HT, devis et négociation, plusieurs décideurs, relation sur le long terme.",
+"En BtoC : achats plus émotionnels et rapides, petites quantités, prix TTC, client protégé par le Code de la consommation."],
+ex:[
+C("BtoB, BtoC ou CtoC ?",["BtoB","BtoC","CtoC"],[
+["Metro vend à un restaurateur",0],["Zara vend un pull à une étudiante",1],["Un particulier vend sa veste sur Vinted",2],["Un fabricant de chocolat vend à Carrefour",0],["Darty vend une télé à une famille",1],["Un particulier vend sa voiture sur Leboncoin",2]],null),
+C("Plutôt BtoB ou plutôt BtoC ?",["BtoB","BtoC"],[
+["Prix indiqués HT",0],["Achat souvent émotionnel ou d'impulsion",1],["Devis et négociation",0],["Droit de rétractation de 14 jours pour un achat en ligne",1],["Plusieurs personnes décident de l'achat",0],["Petites quantités",1]],null),
+Q("BtoB signifie…",["Business to Business : d'entreprise à entreprise","Buy to Buy : acheter pour revendre","Bon to Bon : échange de bons","Business to Boutique"],null),
+VF("En BtoC, les prix doivent être affichés TTC.",true,"Le particulier paie la TVA : il doit voir le prix qu'il paiera réellement."),
+Q("Deux particuliers font affaire sur Leboncoin. C'est du…",["CtoC","BtoB","BtoC","CtoB"],null)
+]},
+/* ---------- 8 ---------- */
+{bloc:"fid",title:"Réseaux sociaux et publics",
+memo:[
+"On choisit le réseau social selon la cible (âge, centres d'intérêt) et l'objectif. Les âges ci-dessous sont des tendances, pas des règles absolues.",
+"TikTok, Snapchat : surtout les ados et jeunes adultes (13-24 ans). Vidéos courtes, tendances, humour.",
+"Instagram : jeunes adultes (18-34 ans). Photos, stories, reels : mode, beauté, food.",
+"Facebook : adultes de 35 ans et plus. Événements, groupes locaux, communication de proximité.",
+"YouTube : tous les âges. Tutoriels, démonstrations, tests de produits.",
+"LinkedIn : les professionnels. Idéal en BtoB et pour recruter.",
+"Pinterest : recherche d'inspiration (déco, cuisine, mode, DIY).",
+"Règles : ton adapté au réseau, publications régulières, réponse aux commentaires, respect du droit à l'image."],
+ex:[
+M("Relie chaque réseau à son public ou son usage principal.",[["TikTok","Ados et jeunes adultes, vidéos courtes"],["Facebook","Adultes de 35 ans et plus, groupes locaux"],["LinkedIn","Professionnels, BtoB"],["Pinterest","Inspiration déco, cuisine, mode"],["YouTube","Tous les âges, tutoriels et tests"]],null),
+Q("Une boutique de sneakers vise les 15-20 ans. Quel réseau privilégier ?",["TikTok","LinkedIn","Facebook","Pinterest"],null),
+Q("Un magasin de bricolage veut toucher les plus de 55 ans de la ville. Quel réseau privilégier ?",["Facebook","Snapchat","TikTok","LinkedIn"],null),
+Q("Un grossiste veut trouver de nouveaux restaurants clients (BtoB). Quel réseau privilégier ?",["LinkedIn","Snapchat","TikTok","Pinterest"],null),
+VF("Le même message, avec le même ton, convient à tous les réseaux sociaux.",false,"Chaque réseau a son public et ses codes : on adapte le ton et le format."),
+VF("On peut publier la photo d'un client sans son accord s'il est dans le magasin.",false,"Il faut son autorisation : c'est le droit à l'image.")
+]},
+/* ---------- 9 ---------- */
+{bloc:"loi",title:"Le RGPD",
+memo:[
+"RGPD : Règlement Général sur la Protection des Données, appliqué depuis mai 2018 dans toute l'Union européenne.",
+"Donnée personnelle : toute information qui permet d'identifier une personne (nom, e-mail, téléphone, adresse, photo, historique d'achats…).",
+"Règles : consentement clair (case non pré-cochée), ne collecter que les données utiles, informer le client, protéger les données, ne pas les garder indéfiniment.",
+"Droits du client : accès, rectification, effacement (droit à l'oubli), opposition, portabilité.",
+"La CNIL contrôle et sanctionne : jusqu'à 20 millions € ou 4 % du chiffre d'affaires mondial."],
+ex:[
+Q("RGPD signifie…",["Règlement Général sur la Protection des Données","Registre Général des Prix et Devis","Règle de Gestion des Produits Distribués","Réseau Général de Publicité Digitale"],null),
+C("Donnée personnelle ou non ?",["Donnée personnelle","Pas une donnée personnelle"],[
+["L'adresse e-mail d'un client",0],["Le prix d'un produit",1],["Le numéro de téléphone d'un client",0],["La photo d'un client",0],["Le nombre de rayons du magasin",1],["L'historique d'achats de M. Dupont",0]],null),
+M("Relie chaque droit à son exemple.",[["Droit d'accès","Le client demande quelles données vous avez sur lui"],["Droit de rectification","Il demande de corriger son adresse"],["Droit à l'effacement","Il veut que ses données soient supprimées"],["Droit d'opposition","Il refuse de recevoir la newsletter"]],null),
+Q("Pour inscrire un client à la newsletter, il faut…",["Son consentement clair : une case qu'il coche lui-même","Une case déjà cochée par défaut","Rien, il est client donc c'est automatique","L'accord du directeur"],null),
+T("Complète.","En France, c'est la {{CNIL|DGCCRF|CAF}} qui contrôle le respect du RGPD, appliqué depuis {{2018|2008|1998}}.",null),
+VF("On peut demander le numéro de sécurité sociale d'un client pour lui créer une carte de fidélité.",false,"On ne collecte que les données utiles : ce numéro n'a rien à faire dans un fichier clients.")
+]},
+/* ---------- 10 ---------- */
+{bloc:"loi",title:"Protéger le consommateur",
+memo:[
+"Le Code de la consommation protège le particulier (BtoC). La DGCCRF contrôle les commerces.",
+"Affichage des prix : obligatoire, en euros TTC, lisible.",
+"Droit de rétractation : 14 jours pour un achat à distance (internet, téléphone) ou hors établissement (démarchage). En magasin, pas de droit de rétractation légal : un échange ou remboursement est un geste commercial.",
+"Garantie légale de conformité : 2 ans pour un bien neuf (réparation ou remplacement gratuit).",
+"Garantie des vices cachés : défaut caché qui existait avant l'achat.",
+"Garantie commerciale : facultative, en plus (extension de garantie), souvent payante.",
+"Soldes : périodes fixées par l'État ; la revente à perte y est autorisée. Démarchage téléphonique : liste d'opposition Bloctel."],
+ex:[
+Q("Un client achète des chaussures sur internet. Combien de temps a-t-il pour se rétracter ?",["14 jours","7 jours","30 jours","Aucun délai"],null),
+VF("En magasin, le client a toujours le droit légal de rendre un article sous 14 jours.",false,"Le droit de rétractation concerne la vente à distance et hors établissement. En magasin, c'est un geste commercial prévu par l'enseigne."),
+M("Relie chaque garantie à sa définition.",[["Garantie légale de conformité","Obligatoire, 2 ans pour un bien neuf"],["Garantie des vices cachés","Défaut caché qui existait avant l'achat"],["Garantie commerciale","Facultative, proposée en plus par le vendeur ou la marque"]],null),
+Q("Comment les prix doivent-ils être affichés pour les particuliers ?",["En euros TTC, de façon lisible","En euros HT","Seulement sur demande","Seulement en caisse"],null),
+T("Complète.","Pour un achat sur internet, le client dispose de {{14 jours|7 jours|30 jours}} pour se rétracter. Un bien neuf bénéficie d'une garantie légale de conformité de {{2 ans|6 mois|10 ans}}.",null),
+Q("Quel organisme contrôle le respect des règles de protection du consommateur dans les magasins ?",["La DGCCRF","La CNIL","Pôle emploi","L'URSSAF"],null),
+VF("Pendant les soldes, la revente à perte est autorisée.",true,"C'est une des rares exceptions à l'interdiction de revendre à perte.")
+]},
+/* ---------- 11 ---------- */
+{bloc:"loi",title:"Les CGV",
+memo:[
+"CGV : Conditions Générales de Vente. Le document qui fixe les règles de la vente entre le vendeur et l'acheteur.",
+"Contenu : identité du vendeur, prix et modalités de paiement, livraison (délais, frais), droit de rétractation et retours, garanties et SAV, pénalités de retard (en BtoB), données personnelles, médiateur.",
+"En e-commerce : le client doit en prendre connaissance et les accepter avant de valider sa commande.",
+"En BtoB : le fournisseur doit les communiquer à tout professionnel qui les demande. Elles sont la base de la négociation.",
+"Elles protègent les deux parties : chacun connaît ses droits et ses obligations."],
+ex:[
+Q("CGV signifie…",["Conditions Générales de Vente","Contrôle Général des Ventes","Carte Générale de Fidélité","Code de Gestion des Vendeurs"],null),
+C("Cet élément figure-t-il dans les CGV ?",["Oui","Non"],[
+["Les délais de livraison",0],["Les modes de paiement acceptés",0],["Les conditions de retour",0],["Le salaire des vendeurs",1],["Le planning de l'équipe",1],["Les garanties",0],["Les objectifs de vente du mois",1]],"Les CGV concernent la relation entre vendeur et acheteur, pas l'organisation interne."),
+Q("Sur un site e-commerce, quand le client accepte-t-il les CGV ?",["Avant de valider sa commande","Après avoir reçu le colis","Jamais, elles sont facultatives","Seulement s'il fait une réclamation"],null),
+VF("En BtoB, un fournisseur doit communiquer ses CGV à un client professionnel qui les demande.",true,null),
+Q("À quoi servent les CGV ?",["Informer l'acheteur et le vendeur de leurs droits et obligations","Fixer le salaire des vendeurs","Calculer la démarque","Organiser l'inventaire"],null)
+]},
+/* ---------- 12 ---------- */
+{bloc:"loi",title:"Les règles d'hygiène",
+memo:[
+"Objectif : protéger la santé du consommateur. La méthode HACCP sert à repérer et maîtriser les risques sanitaires.",
+"Hygiène du personnel : se laver les mains, attacher ses cheveux (charlotte), tenue propre, gants si besoin, pas de bijoux en zone alimentaire, ne pas manipuler d'aliments en étant malade.",
+"Chaîne du froid : ne jamais l'interrompre. Produits frais en général entre 0 et +4 °C. Surgelés à −18 °C ou moins. Ranger les produits froids dès la réception, relever les températures chaque jour.",
+"Un produit décongelé ne se recongèle jamais.",
+"Marche en avant : les produits circulent du « sale » vers le « propre » sans jamais revenir en arrière.",
+"Rotation FIFO, retrait des produits périmés, nettoyage des rayons et du matériel."],
+ex:[
+T("Complète.","Les surgelés se conservent à {{−18 °C|0 °C|+4 °C}} ou moins. Les produits frais se conservent en général entre {{0 et +4 °C|+10 et +15 °C|−18 et −10 °C}}.",null),
+C("Bonne ou mauvaise pratique ?",["Bonne pratique","Mauvaise pratique"],[
+["Se laver les mains avant de manipuler les produits",0],["Laisser les surgelés sur le quai pendant la pause",1],["Attacher ses cheveux au rayon traiteur",0],["Recongeler un produit décongelé",1],["Relever la température des frigos chaque jour",0],["Porter des bagues en manipulant la viande",1]],null),
+Q("La chaîne du froid, c'est…",["Maintenir les produits à la bonne température, sans interruption, du producteur au client","Une chaîne de magasins de surgelés","Le rangement des produits par ordre alphabétique","Le nettoyage des frigos"],null),
+Q("Le principe de la « marche en avant », c'est…",["Les produits vont du sale vers le propre sans jamais revenir en arrière","Avancer les produits au bord du rayon","Vendre d'abord les nouveautés","Accueillir le client en marchant vers lui"],"À ne pas confondre avec le facing !"),
+O("Livraison de surgelés : remets les étapes dans l'ordre.",["Vérifier la température du camion et des produits","Contrôler l'état des emballages","Ranger immédiatement en chambre froide","Enregistrer la réception"],"Le froid passe avant tout : on range vite, on enregistre ensuite."),
+VF("HACCP est une méthode pour garantir la sécurité sanitaire des aliments.",true,null)
+]},
+/* ---------- 13 ---------- */
+{bloc:"loi",title:"Les dates de péremption : DLC et DDM",
+memo:[
+"DLC (Date Limite de Consommation) : « À consommer jusqu'au… ». Produits très périssables : viande, poisson, laitages frais. Après la date : risque pour la santé, INTERDIT à la vente → retrait du rayon.",
+"DDM (Date de Durabilité Minimale, ancienne DLUO) : « À consommer de préférence avant… ». Produits secs ou stables : pâtes, biscuits, conserves, café. Après la date, le produit peut perdre du goût, mais reste consommable et peut encore être vendu s'il est en bon état.",
+"Contrôler les dates en rayon chaque jour et appliquer la rotation FIFO (premier entré, premier sorti).",
+"Anti-gaspillage : promotions sur les dates courtes, dons aux associations, applis comme Too Good To Go."],
+ex:[
+M("Relie chaque sigle à sa mention sur l'emballage.",[["DLC","« À consommer jusqu'au… »"],["DDM","« À consommer de préférence avant… »"]],null),
+C("DLC ou DDM ?",["DLC","DDM"],[
+["Steak haché",0],["Paquet de pâtes",1],["Yaourt nature",0],["Boîte de conserve",1],["Filet de poisson frais",0],["Café moulu",1],["Biscuits secs",1]],"Frais et périssable → DLC. Sec ou stable → DDM."),
+Q("La DLC d'un steak haché était hier. Que fais-tu ?",["Je le retire immédiatement de la vente","Je le mets en promotion","Je le laisse en rayon jusqu'à la fin de la semaine","Je change l'étiquette"],"DLC dépassée = interdit à la vente. Il passe en démarque."),
+VF("Un paquet de pâtes dont la DDM est dépassée peut encore être consommé.",true,"Il peut avoir perdu un peu de qualité, mais il n'est pas dangereux."),
+T("Complète.","DLC : Date Limite de {{Consommation|Commande|Conservation}}. DDM : Date de {{Durabilité Minimale|Distribution Maximale|Dépôt en Magasin}}.",null),
+Q("Des yaourts arrivent à leur DLC dans 2 jours. Que peut faire le magasin ?",["Les mettre en promotion ou les donner à une association avant la date","Les vendre après la date","Changer la date sur l'emballage","Les recongeler"],null)
+]}
+];
+
+/* ================= OUTILS ================= */
+const TYPES={qcm:"QCM",vf:"Vrai ou faux",match:"Relie les flèches",order:"Remets dans l'ordre",trous:"Texte à trous",classer:"Classe les éléments"};
+const HINTS={qcm:"Une seule bonne réponse.",vf:"Choisis Vrai ou Faux.",match:"Clique un élément à gauche, puis son partenaire à droite. Clique à nouveau pour défaire un lien.",order:"Utilise les flèches pour déplacer les étiquettes.",trous:"Choisis le bon mot dans chaque menu.",classer:"Pour chaque ligne, choisis la bonne catégorie."};
+const PAIRC=["--p1","--p2","--p3","--p4","--p5","--p6","--p7"];
+const $=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="class")e.className=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(k==="html")e.innerHTML=v;else e.setAttribute(k,v)}for(const k of kids.flat()){if(k==null)continue;e.append(k.nodeType?k:document.createTextNode(k))}return e};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fr=n=>(Math.round(n*10)/10).toString().replace(".",",");
+const KEY="mcv-revisions-p2-v1";
+let best={};
+try{best=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){best={}}
+const saveBest=()=>{try{localStorage.setItem(KEY,JSON.stringify(best))}catch(e){}};
+
+/* ================= RENDU DES EXERCICES ================= */
+function buildExercise(ex,onReady){
+  const box=$("div",{class:"ex-body"});
+  let api;
+  if(ex.t==="qcm"||ex.t==="vf"){
+    const opts= ex.t==="vf" ? [{txt:"Vrai",ok:ex.a===true},{txt:"Faux",ok:ex.a===false}]
+                            : shuffle(ex.o.map((txt,i)=>({txt,ok:i===0})));
+    let sel=null;
+    const list=$("div",{class:"opts"+(ex.t==="vf"?" vf":"")});
+    const btns=opts.map((o,i)=>{const b=$("button",{class:"opt",type:"button",onclick:()=>{sel=i;btns.forEach((x,j)=>x.classList.toggle("sel",j===i));onReady(true)}},
+      ex.t==="qcm"?$("span",{class:"k"},"ABCD"[i]):null,$("span",{},o.txt));list.append(b);return b});
+    box.append(list);
+    api={check(){btns.forEach((b,i)=>{b.disabled=true;if(opts[i].ok)b.classList.add("ok");else if(i===sel)b.classList.add("ko")});return opts[sel]?.ok?1:0},
+         correction(){return null}};
+    onReady(false);
+  }
+  else if(ex.t==="match"){
+    const wrap=$("div",{class:"match"});
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    const L=$("div",{class:"col l"}), gap=$("div"), R=$("div",{class:"col r"});
+    const rights=shuffle(ex.p.map((p,i)=>({txt:p[1],i})));
+    const pairs=new Map(); // leftIdx -> rightIdx(original)
+    let selL=null, locked=false;
+    const lEls=ex.p.map((p,i)=>$("button",{class:"mi",type:"button",onclick:()=>{if(locked)return;
+        if(pairs.has(i)){pairs.delete(i);selL=null;refresh();return}
+        selL=selL===i?null:i;refresh()}},p[0]));
+    const rEls={};
+    rights.forEach(r=>{rEls[r.i]=$("button",{class:"mi",type:"button",onclick:()=>{if(locked)return;
+        for(const[l,rr]of pairs)if(rr===r.i){pairs.delete(l);if(selL===null){refresh();return}}
+        if(selL===null){refresh();return}
+        pairs.set(selL,r.i);selL=null;refresh()}},r.txt)});
+    L.append(...lEls);R.append(...rights.map(r=>rEls[r.i]));
+    wrap.append(L,gap,R,svg);box.append(wrap);
+    let marks=null;
+    function draw(){
+      svg.innerHTML="";const W=wrap.getBoundingClientRect();
+      for(const[l,r]of pairs){const a=lEls[l].getBoundingClientRect(),b=rEls[r].getBoundingClientRect();
+        const x1=a.right-W.left,y1=a.top+a.height/2-W.top,x2=b.left-W.left,y2=b.top+b.height/2-W.top;
+        const ln=document.createElementNS("http://www.w3.org/2000/svg","line");
+        ln.setAttribute("x1",x1);ln.setAttribute("y1",y1);ln.setAttribute("x2",x2);ln.setAttribute("y2",y2);
+        ln.setAttribute("stroke-width","3");ln.setAttribute("stroke-linecap","round");
+        ln.setAttribute("stroke",marks?(marks[l]?"var(--good)":"var(--bad)"):`var(${PAIRC[l%PAIRC.length]})`);
+        if(marks&&!marks[l])ln.setAttribute("stroke-dasharray","6 5");
+        svg.append(ln)}
+    }
+    function refresh(){
+      lEls.forEach((e,i)=>{e.classList.toggle("sel",selL===i);e.classList.toggle("paired",pairs.has(i));e.style.setProperty("--pc",`var(${PAIRC[i%PAIRC.length]})`)});
+      Object.values(rEls).forEach(e=>{e.classList.remove("paired");e.style.removeProperty("--pc")});
+      for(const[l,r]of pairs){rEls[r].classList.add("paired");rEls[r].style.setProperty("--pc",`var(${PAIRC[l%PAIRC.length]})`)}
+      onReady(pairs.size===ex.p.length);draw();
+    }
+    new ResizeObserver(draw).observe(wrap);
+    requestAnimationFrame(refresh);
+    api={check(){locked=true;marks={};let ok=0;
+        ex.p.forEach((_,i)=>{const good=pairs.get(i)===i;marks[i]=good;if(good)ok++;lEls[i].classList.add(good?"ok":"ko")});
+        draw();return ok/ex.p.length},
+      correction(){const wrong=ex.p.filter((_,i)=>!marks[i]);if(!wrong.length)return null;
+        return $("ol",{},wrong.map(p=>$("li",{},p[0]," → ",$("b",{},p[1]))))}};
+    onReady(false);
+  }
+  else if(ex.t==="order"){
+    let cur=shuffle(ex.items.map((t,i)=>i));
+    let guard=0;while(cur.every((v,i)=>v===i)&&guard++<10)cur=shuffle(cur);
+    const ol=$("ol",{class:"order"});let locked=false;
+    function render(){ol.innerHTML="";cur.forEach((v,pos)=>{
+      const up=$("button",{type:"button","aria-label":"Monter",onclick:()=>{[cur[pos-1],cur[pos]]=[cur[pos],cur[pos-1]];render()}},"↑");
+      const dn=$("button",{type:"button","aria-label":"Descendre",onclick:()=>{[cur[pos+1],cur[pos]]=[cur[pos],cur[pos+1]];render()}},"↓");
+      up.disabled=locked||pos===0;dn.disabled=locked||pos===cur.length-1;
+      const li=$("li",{},$("span",{},ex.items[v]),$("div",{class:"mv"},up,dn));
+      if(locked)li.classList.add(v===pos?"ok":"ko");ol.append(li)})}
+    render();box.append(ol);onReady(true);
+    api={check(){locked=true;render();return cur.filter((v,i)=>v===i).length/cur.length},
+      correction(){if(cur.every((v,i)=>v===i))return null;return $("ol",{},ex.items.map(t=>$("li",{},t)))}};
+  }
+  else if(ex.t==="trous"){
+    const p=$("p",{class:"trous"});const sels=[];
+    ex.txt.split(/(\{\{[^}]+\}\})/).forEach(part=>{
+      const m=part.match(/^\{\{(.+)\}\}$/);
+      if(!m){p.append(part);return}
+      const choices=m[1].split("|");const s=$("select",{"aria-label":"Mot manquant",id:"t"+sels.length});
+      s.append($("option",{value:""},"…"));shuffle(choices).forEach(c=>s.append($("option",{value:c},c)));
+      s.addEventListener("change",()=>onReady(sels.every(x=>x.el.value)));
+      sels.push({el:s,good:choices[0]});p.append(s)});
+    box.append(p);onReady(false);
+    api={check(){let ok=0;sels.forEach(s=>{s.el.disabled=true;const g=s.el.value===s.good;if(g)ok++;s.el.classList.add(g?"ok":"ko");
+        if(!g)s.el.after($("span",{class:"sol"},"✓ "+s.good))});return ok/sels.length},correction(){return null}};
+  }
+  else if(ex.t==="classer"){
+    const items=shuffle(ex.items.map(([txt,c])=>({txt,c,sel:null})));
+    const wrap=$("div",{class:"cls"});
+    const rows=items.map(it=>{
+      const seg=$("div",{class:"seg"});
+      const bs=ex.cats.map((cat,ci)=>{const b=$("button",{type:"button",onclick:()=>{it.sel=ci;bs.forEach((x,j)=>x.classList.toggle("sel",j===ci));onReady(items.every(i=>i.sel!==null))}},cat);seg.append(b);return b});
+      const row=$("div",{class:"cls-row"},$("div",{class:"it"},it.txt),seg);
+      wrap.append(row);return{row,bs,seg,it}});
+    box.append(wrap);onReady(false);
+    api={check(){let ok=0;rows.forEach(r=>{r.bs.forEach(b=>b.disabled=true);const g=r.it.sel===r.it.c;if(g)ok++;r.row.classList.add(g?"ok":"ko");
+        if(!g)r.row.append($("div",{class:"fix"},"Bonne réponse : "+ex.cats[r.it.c]))});return ok/items.length},correction(){return null}};
+  }
+  return {el:box,api};
+}
+
+/* ================= VUES ================= */
+const app=document.getElementById("app");
+let run=null;
+
+function hub(){
+  run=null;app.innerHTML="";window.scrollTo(0,0);
+  const done=CH.filter((c,i)=>best[i]!=null);
+  const avg=done.length?CH.reduce((s,c,i)=>s+(best[i]??0),0)/done.length:null;
+  const nbEx=CH.reduce((s,c)=>s+c.ex.length,0);
+  app.append($("header",{class:"hero"},
+    $("span",{class:"eyebrow"},"Bac Pro MCV · Terminale · Révisions de vacances · Partie 2"),
+    $("h1",{html:"Le client, la loi,<br><span>point par point</span>"}),
+    $("p",{},`${CH.length} chapitres, ${nbEx} exercices. Commence par lire « L'essentiel » de chaque chapitre, puis fais les exercices. Ta meilleure note sur 20 est gardée sur cet appareil.`),
+    $("div",{class:"stats"},
+      $("span",{},$("b",{},`${done.length}/${CH.length}`)," chapitres faits"),
+      $("span",{},$("b",{},avg==null?"—":fr(avg)+"/20")," moyenne")),
+    $("div",{class:"howto"},$("a",{class:"chip",href:"index.html",style:"color:var(--accent);font-weight:700"},"← Accueil des révisions"),$("a",{class:"chip",href:"partie1.html",style:"color:var(--accent);font-weight:700"},"Partie 1 →"),Object.values(TYPES).map(t=>$("span",{class:"chip"},t)))));
+  BLOCS.forEach(b=>{
+    const g=$("div",{class:"grid"});
+    CH.forEach((c,i)=>{if(c.bloc!==b.id)return;
+      const sc=best[i];
+      g.append($("button",{class:"card"+(sc!=null?" done":""),type:"button",onclick:()=>start(i)},
+        $("span",{class:"num"},"Chapitre "+String(i+1).padStart(2,"0")),
+        $("h3",{},c.title),
+        $("div",{class:"meta"},$("span",{},c.ex.length+" exercices"),
+          $("span",{class:"price"+(sc==null?" none":"")},sc==null?"à faire":fr(sc)+"/20"))))});
+    app.append($("section",{class:"bloc"},$("h2",{},b.name),$("span",{class:"eyebrow"},b.sub),g));
+  });
+  app.append($("section",{class:"final"},
+    $("div",{},$("h2",{},"Défi final"),$("p",{},"20 exercices tirés au hasard dans tout le programme.")),
+    $("button",{class:"btn tag",type:"button",onclick:()=>start("final")},"Lancer le défi")));
+}
+
+function start(which){
+  let list,title,memo=null;
+  if(which==="final"){
+    list=shuffle(CH.flatMap((c,ci)=>c.ex.map(e=>({...e,from:c.title})))).slice(0,20);title="Défi final";
+  }else{list=CH[which].ex;title=CH[which].title;memo=CH[which].memo}
+  run={which,title,memo,list,idx:0,scores:[]};
+  show();
+}
+
+function show(){
+  app.innerHTML="";window.scrollTo(0,0);
+  const {list,idx}=run;const ex=list[idx];
+  app.append($("div",{class:"top"},
+    $("button",{class:"back",type:"button",onclick:hub},"← Sommaire"),
+    $("span",{class:"eyebrow"},`Exercice ${idx+1} / ${list.length}`)));
+  const bar=$("div",{class:"bar"},$("i",{}));bar.firstChild.style.width=(idx/list.length*100)+"%";
+  app.append($("h2",{style:"font-size:28px;margin-bottom:14px"},run.title),bar);
+  if(run.memo){
+    const d=$("details",{class:"memo"},$("summary",{},"L'essentiel à retenir"),$("ul",{},run.memo.map(m=>$("li",{},m))));
+    if(idx===0)d.open=true;app.append(d);
+  }
+  const checkBtn=$("button",{class:"btn",type:"button"},"Vérifier");
+  const built=buildExercise(ex,ready=>{checkBtn.disabled=!ready});
+  const fbSlot=$("div");
+  const actions=$("div",{class:"actions"},checkBtn);
+  const card=$("article",{class:"ex"},
+    $("div",{class:"ex-head"},$("span",{class:"ex-type"},TYPES[ex.t]),
+      ex.from?$("span",{class:"eyebrow"},ex.from):null,
+      $("div",{class:"ex-q"},ex.q),$("div",{class:"ex-hint"},HINTS[ex.t])),
+    built.el,fbSlot,actions);
+  app.append(card);
+  checkBtn.onclick=()=>{
+    const s=built.api.check();run.scores.push(s);
+    const cls=s===1?"ok":s>=.5?"mid":"ko";
+    const head=s===1?"Bravo, c'est juste !":s>=.5?`Presque : ${Math.round(s*100)} % de bonnes réponses.`:"Ce n'est pas encore ça.";
+    const corr=built.api.correction();
+    fbSlot.append($("div",{class:"fb "+cls},$("strong",{},head),
+      corr?$("div",{},"La bonne réponse :",corr):null,
+      ex.ex?$("div",{},ex.ex):null));
+    checkBtn.remove();
+    const last=run.idx===run.list.length-1;
+    actions.append($("button",{class:"btn",type:"button",onclick:()=>{if(last)result();else{run.idx++;show()}}},last?"Voir ma note":"Suivant →"));
+    actions.lastChild.focus({preventScroll:true});
+    fbSlot.scrollIntoView({behavior:"smooth",block:"nearest"});
+  };
+}
+
+function result(){
+  app.innerHTML="";window.scrollTo(0,0);
+  const total=run.scores.reduce((a,b)=>a+b,0);
+  const note=total/run.list.length*20;
+  if(run.which!=="final"){const prev=best[run.which];if(prev==null||note>prev){best[run.which]=Math.round(note*10)/10;saveBest()}}
+  const msg=note>=16?"Excellent ! Cette notion est acquise.":note>=12?"Bien ! Relis l'essentiel et refais les exercices ratés.":note>=8?"C'est un début. Relis l'essentiel, puis recommence.":"Relis bien l'essentiel avant de recommencer. Tu vas y arriver !";
+  const d=new Date();
+  const t=$("div",{class:"ticket"},
+    $("div",{class:"c"},$("b",{},"MAGASIN DES RÉVISIONS"),$("br"),"Terminale Bac Pro MCV"),
+    $("div",{class:"c",style:"color:var(--muted);margin-top:4px"},d.toLocaleDateString("fr-FR")+"  "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})),
+    $("hr"),
+    $("div",{},run.title.toUpperCase()),
+    $("hr"),
+    run.list.map((e,i)=>$("div",{class:"row"},$("span",{},String(i+1).padStart(2,"0")+" "+TYPES[e.t]),$("span",{},fr(run.scores[i])+" pt"))),
+    $("hr"),
+    $("div",{class:"row"},$("span",{},"Points"),$("span",{},fr(total)+" / "+run.list.length)),
+    $("div",{class:"row tot"},$("span",{},"NOTE"),$("span",{},fr(note)+"/20")),
+    $("hr"),
+    $("div",{class:"msg"},msg),
+    $("div",{class:"c",style:"margin-top:10px;color:var(--muted)"},"Merci de votre visite, à bientôt !"));
+  app.append($("div",{class:"top"},$("button",{class:"back",type:"button",onclick:hub},"← Sommaire"),$("span")),t,
+    $("div",{class:"res-actions"},
+      $("button",{class:"btn",type:"button",onclick:()=>start(run.which)},"Recommencer"),
+      $("button",{class:"btn ghost",type:"button",onclick:hub},"Retour au sommaire")));
+}
+
+hub();
+</script>
+
+</body>
+</html>
